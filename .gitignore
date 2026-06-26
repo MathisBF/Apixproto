@@ -1,21 +1,38 @@
-# Ignore Gradle project-specific cache directory
-.gradle
+# Gradle
+.gradle/
+build/
+.kotlin/
 
-# Ignore Gradle build output directory
-build
+# IDE
+.vscode/
+.idea/
+*.iml
+.project
+.classpath
+.settings/
 
-# Ignore Kotlin plugin data
-.kotlin
-
-# VSCode
-.vscode
+# Lucene index
+app/src/main/resources/index/
 
 # Java
 *.class
+
+# Logs
+*.log
+hs_err_pid*
+replay_pid*
+
+# Archives
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Lucene Index
-app/src/main/resources/index
+# Keep Gradle wrapper
+!gradle/wrapper/gradle-wrapper.jar
