@@ -42,7 +42,7 @@ public class LuceneSearcher implements AutoCloseable {
     /**
      * Le searcher, permet de lancer les requêtes et de lire leurs résultats.
      */
-    private final IndexSearcher searcher;
+    private IndexSearcher searcher;
     /**
      * L'analyzer, permet d'interpréter des requêtes sous forme de textes.
      */
@@ -60,6 +60,19 @@ public class LuceneSearcher implements AutoCloseable {
         IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
         this.searcher = new IndexSearcher(reader);
         this.analyzer = new StandardAnalyzer();
+    }
+
+
+
+    /**
+     * Teste la présence ou non d'un index préexistant.
+     * 
+     * @param indexPath Le chemin vers l'index.
+     * @return True si un index existe déjà false sinon.
+     * @throws IOException
+     */
+    public static boolean indexExists(Path indexPath) throws IOException {
+        return DirectoryReader.indexExists(FSDirectory.open(indexPath));
     }
 
 
@@ -271,6 +284,24 @@ public class LuceneSearcher implements AutoCloseable {
         }
         
         return textFields.toArray(new String[0]);
+    }
+
+
+
+    /**
+     * Actualise le searcher sur l'index.
+     * 
+     * @throws IOException
+     */
+    public void refresh() throws IOException {
+
+        DirectoryReader oldReader = (DirectoryReader) searcher.getIndexReader();
+        DirectoryReader newReader = DirectoryReader.openIfChanged(oldReader);
+
+        if (newReader != null) {
+            oldReader.close();
+            this.searcher = new IndexSearcher(newReader);
+        }
     }
 
 
