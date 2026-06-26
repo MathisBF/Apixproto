@@ -1,2 +1,0 @@
-# Prototype d'indexer Lucene
-
