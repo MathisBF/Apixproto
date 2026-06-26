@@ -1,6 +1,8 @@
 package org.searcher;
 
 
+import org.model.ParquetSchema;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -14,8 +16,6 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.LongField;
@@ -47,6 +47,10 @@ public class LuceneSearcher implements AutoCloseable {
      * L'analyzer, permet d'interpréter des requêtes sous forme de textes.
      */
     private final StandardAnalyzer analyzer;
+    /**
+     * Le schema des données indexés.
+     */
+    private ParquetSchema schema;
 
 
 
@@ -55,11 +59,13 @@ public class LuceneSearcher implements AutoCloseable {
      * 
      * @param indexPath Le chemin vers le fichier contenant l'index Lucene.
      * @throws IOException
+     * @throws Exception
      */
-    public LuceneSearcher(Path indexPath) throws IOException {
+    public LuceneSearcher(Path indexPath) throws IOException, Exception {
         IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
         this.searcher = new IndexSearcher(reader);
         this.analyzer = new StandardAnalyzer();
+        this.schema = new ParquetSchema(indexPath);
     }
 
 
@@ -149,7 +155,7 @@ public class LuceneSearcher implements AutoCloseable {
      * @throws ParseException 
      */
     public TopDocs largeSearch(String text, int nbResults) throws IOException, ParseException {
-        String[] fields = getFieldsName();
+        String[] fields = (String[]) this.schema.getFieldsName().toArray();
         
         //System.out.println("Text fields : ");
         //for (String field : fields) {
@@ -258,32 +264,6 @@ public class LuceneSearcher implements AutoCloseable {
             .build();                            // MUST_NOT = NOT
 
         runQuery(query, field1 + "=" + value1 + " AND " + field2 + "=" + value2);
-    }
-
-
-
-    /**
-     * Retourne les champs textuels de l'index.
-     * 
-     * .getIndexreader() retourne le lecteur de l'index entier,
-     * .leaves() retourne la liste des segments de l'index.
-     * 
-     * @return Les champs.
-     * @throws IOException
-     */
-    private String[] getFieldsName() throws IOException {
-        
-        List<String> textFields = new ArrayList<>();
-
-        for (LeafReaderContext leaf : this.searcher.getIndexReader().leaves()) {
-            for (FieldInfo fi : leaf.reader().getFieldInfos()) {
-                //if (fi.getIndexOptions() != IndexOptions.NONE && fi.hasTermVectors()) {
-                    textFields.add(fi.name);
-                //}
-            }
-        }
-        
-        return textFields.toArray(new String[0]);
     }
 
 

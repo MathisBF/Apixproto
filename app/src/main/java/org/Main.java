@@ -74,7 +74,7 @@ public class Main {
      * @param searcher Le searcher, voir LuceneSearcher.
      * @throws Exception
      */
-    private static void search(LuceneSearcher searcher) throws Exception {
+    private static void presetSearch(LuceneSearcher searcher) throws Exception {
         System.out.println("\n=== Recherches ===\n");
 
         // Valeur exacte
@@ -91,21 +91,6 @@ public class Main {
         // Combinaison AND
         searcher.searchBoolean_Old("ville", "Paris", "metier", "ingénieur");
     }
-
-
-
-    ///**
-    // * Effectue une requête textuel sur un champ.
-    // * Utilise LuceneSearcher.searchText.
-    // * 
-    // * @param stringField Le nom du champ.
-    // * @param stringQuery La requête.
-    // * @param searcher Le searcher, voir LuceneSearcher.
-    // * @throws Exception
-    // */
-    //public static void homeSearchOnField_Old(String stringField, String stringQuery, LuceneSearcher searcher) throws Exception {
-    //    searcher.searchText(stringField, stringQuery);
-    //}
 
 
 
@@ -150,7 +135,6 @@ public class Main {
             while (choix != 4) {
                 System.out.println("\n\n=== Menu ===\n");
                 System.out.println("1 - Rebuild the Index");
-                //System.out.println("2 - Do a research _ Old");
                 System.out.println("2 - Do a research");
                 System.out.println("3 - Run prewritted researches");
                 System.out.println("4 - Leave the app");
@@ -169,14 +153,6 @@ public class Main {
                             System.err.println("Error during the indexation : " + e.getMessage());
                         }
                         break;
-
-                    //case 2:
-                    //    System.out.print("\n--- Your query ---\nfield : ");
-                    //    query[0] = scanner.nextLine();
-                    //    System.out.print("text : ");
-                    //    query[1] = scanner.nextLine();
-                    //    homeSearchOnField_Old(query[0], query[1], searcher);
-                    //    break;
                     
                     case 2:
                         System.out.print("\n--- Your query ---\nfield : ");
@@ -188,7 +164,7 @@ public class Main {
 
                     case 3:
                         try {
-                            search(searcher);
+                            presetSearch(searcher);
                         } catch (Exception e) {
                             System.err.println("Error during the research : " + e.getMessage());
                         }

@@ -2,6 +2,7 @@ package org.indexer;
 
 
 import org.model.ParquetRow;
+import org.model.ParquetSchema;
 
 import java.io.IOException;
 import java.nio.file.Path;

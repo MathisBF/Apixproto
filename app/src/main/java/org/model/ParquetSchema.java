@@ -4,6 +4,7 @@ package org.model;
 import org.parquet.ParquetReader;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.List;
 
@@ -68,7 +69,7 @@ public class ParquetSchema {
     /**
      * Determine le type de champ Lucene vers lequel convertir un champ Arrow.
      * 
-     * @param arrowField Le champ Arrow. 
+     * @param arrowField Le champ Arrow.
      * @return Le type de champ Lucene.
      */
     public FieldType arrowToLuceneField(org.apache.arrow.vector.types.pojo.Field arrowField) {
@@ -77,10 +78,10 @@ public class ParquetSchema {
         //    return null;
         //} else {
             return switch (arrowField.getType().getTypeID()) {
-                case ArrowType.ArrowTypeID.Int -> FieldType.LongField;
-                case ArrowType.ArrowTypeID.FloatingPoint -> FieldType.DoubleField;
-                case ArrowType.ArrowTypeID.Bool -> FieldType.IntField;
-                case ArrowType.ArrowTypeID.Utf8, ArrowType.ArrowTypeID.LargeUtf8 -> FieldType.StringField; // ou TEXT selon le champ
+                case Int -> FieldType.LongField;
+                case FloatingPoint -> FieldType.DoubleField;
+                case Bool -> FieldType.IntField;
+                case Utf8, LargeUtf8 -> FieldType.StringField; // ou TEXT selon le champ
                 default -> FieldType.StringField;
             };
         //}
@@ -108,6 +109,17 @@ public class ParquetSchema {
      */
     public FieldType getFieldType(String fieldName) {
         return this.fields.get(fieldName);
+    }
+
+
+
+    /**
+     * Retourne les noms des champs.
+     * 
+     * @return Un set contenant les noms des champs.
+     */
+    public Set<String> getFieldsName() {
+        return this.fields.keySet();
     }
 
 
