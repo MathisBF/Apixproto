@@ -16,6 +16,8 @@ import org.parquet.ParquetReader;
  */
 public class Main {
 
+    private static LuceneSearcher searcher;
+
     /**
      * La méthode main de l'app.
      * 
@@ -33,9 +35,7 @@ public class Main {
         Path indexPath = Path.of(args[1]);
 
 
-        try (LuceneSearcher searcher = new LuceneSearcher(indexPath)) {
-            runConsole(parquetPath, indexPath, searcher);
-        }
+        runConsole(parquetPath, indexPath);
     }
 
 
@@ -135,10 +135,11 @@ public class Main {
      * @param searcher Le searcher, voir LuceneSearcher.
      * @throws Exception
      */
-    private static void runConsole(Path parquetPath, Path indexPath, LuceneSearcher searcher) throws Exception {
+    private static void runConsole(Path parquetPath, Path indexPath) throws Exception {
 
         int choix = 0;
         String[] query = new String[2];
+        searcher = null;
 
         try (Scanner scanner = new Scanner(System.in);) {
 
@@ -161,6 +162,10 @@ public class Main {
                         } catch (Exception e) {
                             System.err.println("Error during the indexation : " + e.getMessage());
                         }
+
+                        if (searcher != null) searcher.close();
+                        searcher = new LuceneSearcher(indexPath);
+
                         break;
 
                     //case 2:
@@ -172,6 +177,10 @@ public class Main {
                     //    break;
                     
                     case 2:
+                        if (searcher == null) {
+                            System.out.println("Veuillez construire l'index avant d'effectuer une recherche.");
+                            break;
+                        }
                         System.out.print("\n--- Your query ---\nfield : ");
                         query[0] = scanner.nextLine();
                         System.out.print("text : ");
@@ -180,6 +189,10 @@ public class Main {
                         break;
 
                     case 3:
+                        if (searcher == null) {
+                            System.out.println("Veuillez construire l'index avant d'effectuer une recherche.");
+                            break;
+                        }
                         try {
                             search(searcher);
                         } catch (Exception e) {
@@ -196,6 +209,8 @@ public class Main {
                         break;
                 }
             }
+
+            if (searcher != null) searcher.close();
         }
     }
 }
