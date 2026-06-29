@@ -1,26 +1,16 @@
 package org.indexer;
 
 
+import org.model.IndexSchema;
 import org.model.ParquetRow;
-//import org.model.IndexSchema;
-//import org.model.IndexSchema.LuceneFieldType;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-//import java.util.List;
-//import java.util.ArrayList;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
-import org.apache.lucene.document.Field;
-//import org.apache.lucene.document.FloatField;
-//import org.apache.lucene.document.IntField;
-import org.apache.lucene.document.LongField;
-import org.apache.lucene.document.DoubleField;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -38,6 +28,7 @@ public class LuceneIndexer implements AutoCloseable {
      * Le writer, écrit l'index.
      */
     private final IndexWriter writer;
+    private IndexSchema schema;
 
 
 
@@ -47,11 +38,12 @@ public class LuceneIndexer implements AutoCloseable {
      * @param indexPath Le chemin vers le fichier sur lequel écrire l'index.
      * @throws IOException
      */
-    public LuceneIndexer(Path indexPath) throws IOException {
+    public LuceneIndexer(Path indexPath, IndexSchema schema) throws IOException {
         Directory directory = FSDirectory.open(indexPath);
         IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE); // CREATE_OR_APPEND pour ajouter si l'index existe déjà
         this.writer = new IndexWriter(directory, config);
+        this.schema = schema;
     }
 
 
@@ -67,67 +59,32 @@ public class LuceneIndexer implements AutoCloseable {
         Document doc = new Document();
 
         for (Map.Entry<String, Object> entry : row.getFields().entrySet()) {
-            String key = entry.getKey();
+            String fieldName = entry.getKey();
             Object value = entry.getValue();
 
             if (value == null) continue;
 
-            //LuceneFieldType type = IndexSchema.arrowToLuceneField(
-            //    new org.apache.arrow.vector.types.pojo.Field(
-            //        key, value,
-            //        new ArrayList<org.apache.arrow.vector.types.pojo.Field>()
-            //    )
-            //);
-//
-            //switch (type) {
-//
-            //    case LuceneFieldType.TextField:
-            //        doc.add(new TextField(key, value.toString(), Field.Store.YES));
-            //        break;
-//
-            //    case LuceneFieldType.StringField:
-            //        doc.add(new StringField(key, value.toString(), Field.Store.YES));
-            //        break;
-//
-            //    case LuceneFieldType.IntField:
-            //        doc.add(new IntField(key, ((Number) value).intValue(), Field.Store.YES));
-            //        break;
-//
-            //    case LuceneFieldType.LongField:
-            //        doc.add(new LongField(key, ((Number) value).longValue(), Field.Store.YES));
-            //        break;
-//
-            //    case LuceneFieldType.FloatField:
-            //        doc.add(new FloatField(key, ((Number) value).floatValue(), Field.Store.YES));
-            //        break;
-//
-            //    case LuceneFieldType.DoubleField:                    
-            //        doc.add(new DoubleField(key, ((Number) value).doubleValue(), Field.Store.YES));
-            //        break;
-//
-            //    default:
-            //        break;
-            //}
+            this.schema.addDocument(doc, fieldName, value);
 
-            if (value instanceof Long l) {
-                doc.add(new LongField(key, l, Field.Store.YES));
-            } else if (value instanceof Integer i) {
-                doc.add(new DoubleField(key, i, Field.Store.YES));
-            } else if (value instanceof Float f) {
-                doc.add(new DoubleField(key, f, Field.Store.YES));
-            } else if (value instanceof Double d) {
-                 doc.add(new DoubleField(key, d, Field.Store.YES));
-            } else if (value instanceof Boolean b) {
-                // Lucene n'a pas de Field de bouléen
-                doc.add(new StringField(key, b.toString(), Field.Store.YES));
-            } else {
-                String text = value.toString();
-                if (isFullTextField(key)) {
-                    doc.add(new TextField(key, text, Field.Store.YES));
-                } else {
-                    doc.add(new StringField(key, text, Field.Store.YES));
-                }
-            }
+            //if (value instanceof Long l) {
+            //    doc.add(new LongField(fieldName, l, Field.Store.YES));
+            //} else if (value instanceof Integer i) {
+            //    doc.add(new DoubleField(fieldName, i, Field.Store.YES));
+            //} else if (value instanceof Float f) {
+            //    doc.add(new DoubleField(fieldName, f, Field.Store.YES));
+            //} else if (value instanceof Double d) {
+            //     doc.add(new DoubleField(fieldName, d, Field.Store.YES));
+            //} else if (value instanceof Boolean b) {
+            //    // Lucene n'a pas de Field de bouléen
+            //    doc.add(new StringField(fieldName, b.toString(), Field.Store.YES));
+            //} else {
+            //    String text = value.toString();
+            //    if (isFullTextField(fieldName)) {
+            //        doc.add(new TextField(fieldName, text, Field.Store.YES));
+            //    } else {
+            //        doc.add(new StringField(fieldName, text, Field.Store.YES));
+            //    }
+            //}
         }
 
         this.writer.addDocument(doc);
@@ -135,18 +92,18 @@ public class LuceneIndexer implements AutoCloseable {
 
 
 
-    /**
-     * Détermine si un champ doit être indexé en full-text (TextField)
-     * ou en valeur exacte (StringField).
-     * 
-     * @param fieldName Le nom du champ.
-     */
-    private boolean isFullTextField(String fieldName) {
-        return switch (fieldName) {
-            case "description", "titre", "contenue", "texte" -> true;
-            default -> false;
-        };
-    }
+    ///**
+    // * Détermine si un champ doit être indexé en full-text (TextField)
+    // * ou en valeur exacte (StringField).
+    // * 
+    // * @param fieldName Le nom du champ.
+    // */
+    //private boolean isFullTextField(String fieldName) {
+    //    return switch (fieldName) {
+    //        case "description", "titre", "contenue", "texte" -> true;
+    //        default -> false;
+    //    };
+    //}
 
 
 

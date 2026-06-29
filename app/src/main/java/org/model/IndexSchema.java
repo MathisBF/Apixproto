@@ -11,6 +11,15 @@ import java.nio.file.Path;
 
 import org.apache.arrow.vector.types.pojo.Schema;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.DoublePoint;
+import org.apache.lucene.document.FloatPoint;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.LongPoint;
+import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.Field;
+
 
 
 /**
@@ -21,7 +30,9 @@ public class IndexSchema {
     /**
      * Enumération des types de champs Lucene.
      */
-    public enum LuceneFieldType {TextField, StringField, IntField, LongField,FloatField, DoubleField};
+    public enum LuceneFieldType {
+        TextField, StringField, IntPoint, LongPoint, FloatPoint, DoublePoint
+    };
     /**
      * Les noms des champs et leur type Lucene.
      */
@@ -76,29 +87,6 @@ public class IndexSchema {
 
 
     /**
-     * Determine le type de champ Lucene vers lequel convertir un champ Arrow.
-     * 
-     * @param arrowField Le champ Arrow.
-     * @return Le type de champ Lucene.
-     */
-    public static LuceneFieldType arrowToLuceneField(org.apache.arrow.vector.types.pojo.Field arrowField) {
-
-        //if (arrowField.getType().getTypeID() != null in {ArrowType.Utf8, ArrowType.LargeUtf8}) {
-        //    return null;
-        //} else {
-            return switch (arrowField.getType().getTypeID()) {
-                case Int -> LuceneFieldType.LongField;
-                case FloatingPoint -> LuceneFieldType.DoubleField;
-                case Bool -> LuceneFieldType.StringField;
-                case Utf8, LargeUtf8 -> LuceneFieldType.StringField; // ou TEXT selon le champ
-                default -> LuceneFieldType.StringField;
-            };
-        //}
-    }
-
-
-
-    /**
      * Retourne le nom des champs et leurs types Lucene.
      * 
      * @return Un dictionnaire contenant le nom des champs en clé et leurs types Lucene en valeur.
@@ -128,6 +116,80 @@ public class IndexSchema {
      */
     public Set<String> getFieldsName() {
         return this.fields.keySet();
+    }
+
+
+
+    /**
+     * Determine le type de champ Lucene vers lequel convertir un champ Arrow.
+     * 
+     * @param arrowField Le champ Arrow.
+     * @return Le type de champ Lucene.
+     */
+    public static LuceneFieldType arrowToLuceneField(org.apache.arrow.vector.types.pojo.Field arrowField) {
+
+        switch (arrowField.getType().getTypeID()) {
+            case Int:
+                return LuceneFieldType.IntPoint;
+
+            case FloatingPoint:
+                return LuceneFieldType.FloatPoint;                    
+
+            case Bool:
+                return LuceneFieldType.StringField;
+
+            case Date:
+                return LuceneFieldType.LongPoint;
+
+            case Utf8, LargeUtf8:
+                return switch (arrowField.getName()) {
+                    case "description", "titre", "contenue", "texte" -> LuceneFieldType.TextField;
+                    default -> LuceneFieldType.StringField;
+                };
+
+            default:
+                return LuceneFieldType.StringField;
+        }
+    }
+
+
+
+    public void addDocument(Document doc, String fieldName, Object value) {
+        
+        LuceneFieldType type = getFieldType(fieldName);
+
+        switch (type) {
+            case TextField:
+                doc.add(new TextField(fieldName, value.toString(), Field.Store.YES));
+                break;
+
+            case StringField:
+                doc.add(new TextField(fieldName, value.toString(), Field.Store.YES));
+                break;
+
+            case IntPoint:
+                doc.add(new IntPoint(fieldName, ((Number) value).intValue()));
+                doc.add(new StoredField(fieldName, ((Number) value).intValue()));
+                break;
+
+            case LongPoint:
+                doc.add(new LongPoint(fieldName, ((Number) value).longValue()));
+                doc.add(new StoredField(fieldName, ((Number) value).longValue()));
+                break;
+
+            case FloatPoint:
+                doc.add(new FloatPoint(fieldName, ((Number) value).floatValue()));
+                doc.add(new StoredField(fieldName, ((Number) value).floatValue()));
+                break;
+            
+            case DoublePoint:
+                doc.add(new DoublePoint(fieldName, ((Number) value).doubleValue()));
+                doc.add(new StoredField(fieldName, ((Number) value).doubleValue()));
+                break;
+
+            default:
+                break;
+        }
     }
 
 

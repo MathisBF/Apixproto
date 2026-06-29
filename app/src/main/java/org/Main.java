@@ -58,7 +58,8 @@ public class Main {
      */
     private static void buildIndex(Path parquetPath, Path indexPath) throws Exception {
 
-        try (LuceneIndexer indexer = new LuceneIndexer(indexPath)) {
+        IndexSchema schema = new IndexSchema(parquetPath);
+        try (LuceneIndexer indexer = new LuceneIndexer(indexPath, schema)) {
             ParquetReader.readParquet(parquetPath, row -> {
                 try {
                     indexer.writeIndex(row);
