@@ -1,12 +1,10 @@
 package org.searcher;
 
 
-import org.model.ParquetSchema;
+import org.model.IndexSchema;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.ArrayList;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
@@ -50,7 +48,7 @@ public class LuceneSearcher implements AutoCloseable {
     /**
      * Le schema des données indexés.
      */
-    private ParquetSchema schema;
+    private IndexSchema schema;
 
 
 
@@ -65,7 +63,7 @@ public class LuceneSearcher implements AutoCloseable {
         IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
         this.searcher = new IndexSearcher(reader);
         this.analyzer = new StandardAnalyzer();
-        this.schema = new ParquetSchema(indexPath);
+        this.schema = new IndexSchema(indexPath);
     }
 
 
@@ -145,7 +143,7 @@ public class LuceneSearcher implements AutoCloseable {
 
 
     /**
-     * Formalise une requête sur les champs textuels de l'index, l'exécute et renvoie ses résultats.
+     * Formalise une requête textuel sur tous les champs de l'index, l'exécute et renvoie ses résultats.
      * Utilise MultiFieldsQueryParser pour construire la requête à partir d'une chaîne de caractère.
      * 
      * @param text L'objet de la requête.
@@ -154,14 +152,26 @@ public class LuceneSearcher implements AutoCloseable {
      * @throws IOException 
      * @throws ParseException 
      */
-    public TopDocs largeSearch(String text, int nbResults) throws IOException, ParseException {
-        String[] fields = (String[]) this.schema.getFieldsName().toArray();
-        
-        //System.out.println("Text fields : ");
-        //for (String field : fields) {
-        //    System.out.print(field + " ");
-        //}
-        
+    public TopDocs allFieldsSearch(String text, int nbResults) throws IOException, ParseException {
+        String[] fields = (String[]) this.schema.getFieldsName().toArray();        
+        Query query = new MultiFieldQueryParser(fields, analyzer).parse(text);
+        return this.searcher.search(query, nbResults);
+    }
+
+
+
+    /**
+     * Formalise une requête textuel sur une liste de champs de l'index, l'exécute et renvoie ses résultats.
+     * Utilise MultiFieldsQueryParser pour construire la requête à partir d'une chaîne de caractère.
+     * 
+     * @param fields La liste de champs.
+     * @param text L'objet de la requête.
+     * @param nbResults Le nombre maximum de résultats à retourner.
+     * @return Les résultats de la requête.
+     * @throws IOException 
+     * @throws ParseException 
+     */
+    public TopDocs multiFieldsSearch(String[] fields, String text, int nbResults) throws IOException, ParseException {
         Query query = new MultiFieldQueryParser(fields, analyzer).parse(text);
         return this.searcher.search(query, nbResults);
     }
@@ -180,6 +190,37 @@ public class LuceneSearcher implements AutoCloseable {
     public TopDocs searchRange(String field, long min, long max, int nbResults) {
         
         return null;
+    }
+
+
+
+    /**
+     * Actualise le searcher sur l'index.
+     * 
+     * @throws IOException
+     */
+    public void refresh() throws IOException {
+
+        DirectoryReader oldReader = (DirectoryReader) searcher.getIndexReader();
+        DirectoryReader newReader = DirectoryReader.openIfChanged(oldReader);
+
+        if (newReader != null) {
+            oldReader.close();
+            this.searcher = new IndexSearcher(newReader);
+        }
+    }
+
+
+
+    /**
+     * Permet de fermer les deux canaux de la classe, le reader du searcher et l'analyzer.
+     * 
+     * @throws IOException
+     */
+    @Override
+    public void close() throws IOException {
+        searcher.getIndexReader().close();
+        analyzer.close();
     }
 
 
@@ -264,36 +305,5 @@ public class LuceneSearcher implements AutoCloseable {
             .build();                            // MUST_NOT = NOT
 
         runQuery(query, field1 + "=" + value1 + " AND " + field2 + "=" + value2);
-    }
-
-
-
-    /**
-     * Actualise le searcher sur l'index.
-     * 
-     * @throws IOException
-     */
-    public void refresh() throws IOException {
-
-        DirectoryReader oldReader = (DirectoryReader) searcher.getIndexReader();
-        DirectoryReader newReader = DirectoryReader.openIfChanged(oldReader);
-
-        if (newReader != null) {
-            oldReader.close();
-            this.searcher = new IndexSearcher(newReader);
-        }
-    }
-
-
-
-    /**
-     * Permet de fermer les deux canaux de la classe, le reader du searcher et l'analyzer.
-     * 
-     * @throws IOException
-     */
-    @Override
-    public void close() throws IOException {
-        searcher.getIndexReader().close();
-        analyzer.close();
     }
 }

@@ -11,32 +11,31 @@ import java.util.List;
 import java.nio.file.Path;
 
 import org.apache.arrow.vector.types.pojo.Schema;
-import org.apache.arrow.vector.types.pojo.ArrowType;
 
 
 
 /**
  * Fais le lien entre les champs Arrow et Lucene.
  */
-public class ParquetSchema {
+public class IndexSchema {
 
     /**
      * Enumération des types de champs Lucene.
      */
-    public enum FieldType {TextField, StringField, IntField, LongField,FloatField, DoubleField};
+    public enum LuceneFieldType {TextField, StringField, IntField, LongField,FloatField, DoubleField};
     /**
      * Les noms des champs et leur type Lucene.
      */
-    private final Map<String, FieldType> fields;
+    private final Map<String, LuceneFieldType> fields;
 
 
 
     /**
-     * Constructeur de ParquetShema, construit fields.
+     * Constructeur de IndexSchema, construit fields.
      * 
      * @param schema Le schema Arrow.
      */
-    public ParquetSchema(Schema schema) {
+    public IndexSchema(Schema schema) {
 
         List<org.apache.arrow.vector.types.pojo.Field> arrowFields = schema.getFields();
         this.fields = new HashMap<>();
@@ -49,12 +48,12 @@ public class ParquetSchema {
 
 
     /**
-     * Constructeur de ParquetShema, construit fields.
+     * Constructeur de IndexSchema, construit fields.
      * 
      * @param parquetPath Le chemin vers le fichier source.
      * @throws Exception 
      */
-    public ParquetSchema(Path parquetPath) throws Exception {
+    public IndexSchema(Path parquetPath) throws Exception {
 
         List<org.apache.arrow.vector.types.pojo.Field> arrowFields = ParquetReader.readSchema(parquetPath).getFields();
         this.fields = new HashMap<>();
@@ -72,21 +71,20 @@ public class ParquetSchema {
      * @param arrowField Le champ Arrow.
      * @return Le type de champ Lucene.
      */
-    public FieldType arrowToLuceneField(org.apache.arrow.vector.types.pojo.Field arrowField) {
+    public static LuceneFieldType arrowToLuceneField(org.apache.arrow.vector.types.pojo.Field arrowField) {
 
         //if (arrowField.getType().getTypeID() != null in {ArrowType.Utf8, ArrowType.LargeUtf8}) {
         //    return null;
         //} else {
             return switch (arrowField.getType().getTypeID()) {
-                case Int -> FieldType.LongField;
-                case FloatingPoint -> FieldType.DoubleField;
-                case Bool -> FieldType.IntField;
-                case Utf8, LargeUtf8 -> FieldType.StringField; // ou TEXT selon le champ
-                default -> FieldType.StringField;
+                case Int -> LuceneFieldType.LongField;
+                case FloatingPoint -> LuceneFieldType.DoubleField;
+                case Bool -> LuceneFieldType.StringField;
+                case Utf8, LargeUtf8 -> LuceneFieldType.StringField; // ou TEXT selon le champ
+                default -> LuceneFieldType.StringField;
             };
         //}
     }
-
 
 
 
@@ -95,7 +93,7 @@ public class ParquetSchema {
      * 
      * @return Un dictionnaire contenant le nom des champs en clé et leurs types Lucene en valeur.
      */
-    public Map<String, FieldType> getFields() {
+    public Map<String, LuceneFieldType> getFields() {
         return this.fields;
     }
 
@@ -107,7 +105,7 @@ public class ParquetSchema {
      * @param fieldName Le nom du champ.
      * @return Le type Lucene du champ.
      */
-    public FieldType getFieldType(String fieldName) {
+    public LuceneFieldType getFieldType(String fieldName) {
         return this.fields.get(fieldName);
     }
 
@@ -125,7 +123,7 @@ public class ParquetSchema {
 
 
     /**
-     * Méthode toString de ParquetSchema.
+     * Méthode toString de IndexSchema.
      */
     @Override
     public String toString() {
@@ -139,7 +137,7 @@ public class ParquetSchema {
 
 
     /**
-     * Méthode equals de ParquetShema.
+     * Méthode equals de IndexSchema.
      */
     @Override
     public boolean equals(Object o) {

@@ -11,14 +11,15 @@ import java.util.Map;
 public class ParquetRow {
 
     /**
-     * Dictionnaire contenant les données. Le nom du champ en clé, et la valeur de la donnée en valeur du dictionnaire.
+     * Dictionnaire contenant les données.
+     * Le nom du champ en clé, et la valeur de la donnée en valeur du dictionnaire.
      */
     private final Map<String, Object> fields;
 
 
 
     /**
-     * Constructeur de RowParquet.
+     * Constructeur de ParquetRow.
      */
     public ParquetRow() {
         this.fields = new HashMap<>();

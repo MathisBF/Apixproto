@@ -106,7 +106,7 @@ public class Main {
     public static void homeSearch(String stringField, String stringQuery, LuceneSearcher searcher) throws Exception {
         if (stringField.equals("ALL")) {
             searcher.printResults(
-                searcher.largeSearch(stringQuery, 10)
+                searcher.allFieldsSearch(stringQuery, 10)
             );
         } else {
             searcher.printResults(

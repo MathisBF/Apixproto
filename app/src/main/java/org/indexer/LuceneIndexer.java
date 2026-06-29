@@ -2,11 +2,14 @@ package org.indexer;
 
 
 import org.model.ParquetRow;
-import org.model.ParquetSchema;
+//import org.model.IndexSchema;
+//import org.model.IndexSchema.LuceneFieldType;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+//import java.util.List;
+//import java.util.ArrayList;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 
@@ -14,6 +17,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.document.Field;
+//import org.apache.lucene.document.FloatField;
+//import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.DoubleField;
 
@@ -66,6 +71,43 @@ public class LuceneIndexer implements AutoCloseable {
             Object value = entry.getValue();
 
             if (value == null) continue;
+
+            //LuceneFieldType type = IndexSchema.arrowToLuceneField(
+            //    new org.apache.arrow.vector.types.pojo.Field(
+            //        key, value,
+            //        new ArrayList<org.apache.arrow.vector.types.pojo.Field>()
+            //    )
+            //);
+//
+            //switch (type) {
+//
+            //    case LuceneFieldType.TextField:
+            //        doc.add(new TextField(key, value.toString(), Field.Store.YES));
+            //        break;
+//
+            //    case LuceneFieldType.StringField:
+            //        doc.add(new StringField(key, value.toString(), Field.Store.YES));
+            //        break;
+//
+            //    case LuceneFieldType.IntField:
+            //        doc.add(new IntField(key, ((Number) value).intValue(), Field.Store.YES));
+            //        break;
+//
+            //    case LuceneFieldType.LongField:
+            //        doc.add(new LongField(key, ((Number) value).longValue(), Field.Store.YES));
+            //        break;
+//
+            //    case LuceneFieldType.FloatField:
+            //        doc.add(new FloatField(key, ((Number) value).floatValue(), Field.Store.YES));
+            //        break;
+//
+            //    case LuceneFieldType.DoubleField:                    
+            //        doc.add(new DoubleField(key, ((Number) value).doubleValue(), Field.Store.YES));
+            //        break;
+//
+            //    default:
+            //        break;
+            //}
 
             if (value instanceof Long l) {
                 doc.add(new LongField(key, l, Field.Store.YES));

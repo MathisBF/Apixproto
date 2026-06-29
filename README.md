@@ -5,7 +5,7 @@ ApixProto est un prototype d'Apix, un module d'indexation et de recherche via Lu
 ---
 
 ## Prérequis et Caractéristiques
-### Java 26
+### Java 26.0.1
 ### Gradle 9.5.1
 ### Lucene 10.4.0
 ### Arrow 15.0.2
