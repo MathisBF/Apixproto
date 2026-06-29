@@ -28,7 +28,7 @@ public class LuceneIndexer implements AutoCloseable {
      * Le writer, écrit l'index.
      */
     private final IndexWriter writer;
-    private IndexSchema schema;
+    private final IndexSchema schema;
 
 
 
@@ -64,7 +64,7 @@ public class LuceneIndexer implements AutoCloseable {
 
             if (value == null) continue;
 
-            this.schema.addDocument(doc, fieldName, value);
+            this.schema.addField(doc, fieldName, value);
 
             //if (value instanceof Long l) {
             //    doc.add(new LongField(fieldName, l, Field.Store.YES));
