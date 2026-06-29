@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
 import java.util.List;
-
 import java.nio.file.Path;
 
 import org.apache.arrow.vector.types.pojo.Schema;
@@ -31,7 +30,7 @@ public class IndexSchema {
 
 
     /**
-     * Constructeur de IndexSchema, construit fields.
+     * Constructeur de IndexSchema, construit fields depuis un schéma Arrow.
      * 
      * @param schema Le schema Arrow.
      */
@@ -48,7 +47,7 @@ public class IndexSchema {
 
 
     /**
-     * Constructeur de IndexSchema, construit fields.
+     * Constructeur de IndexSchema, construit fields depuis un fichier Parquet.
      * 
      * @param parquetPath Le chemin vers le fichier source.
      * @throws Exception 
@@ -61,6 +60,17 @@ public class IndexSchema {
         for (org.apache.arrow.vector.types.pojo.Field f : arrowFields) {
             this.fields.put(f.getName(), arrowToLuceneField(f));
         }
+    }
+
+
+
+    /**
+     * Constructeur de IndexSchema, construit fields depuis un Map déjà construit.
+     * 
+     * @param fields Dictionnaire entre les noms et les types des champs.
+     */
+    public IndexSchema(Map<String, LuceneFieldType> fields) {
+        this.fields = new HashMap<>(fields);
     }
 
 

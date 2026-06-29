@@ -6,6 +6,7 @@ import java.util.Scanner;
 
 import org.indexer.LuceneIndexer;
 import org.searcher.LuceneSearcher;
+import org.model.IndexSchema;
 
 import org.parquet.ParquetReader;
 
@@ -38,7 +39,10 @@ public class Main {
             buildIndex(parquetPath, indexPath);
         }
 
-        try (LuceneSearcher searcher = new LuceneSearcher(indexPath)) {
+        IndexSchema schema = new IndexSchema(parquetPath);
+        System.out.println("\n" + schema.toString() + "\n"); // Debug
+        try (LuceneSearcher searcher = new LuceneSearcher(indexPath, schema)) {
+            System.out.println("\n" + searcher.getSchema().toString() + "\n"); // Debug
             runConsole(parquetPath, indexPath, searcher);
         }
     }
@@ -104,7 +108,7 @@ public class Main {
      * @throws Exception
      */
     public static void homeSearch(String stringField, String stringQuery, LuceneSearcher searcher) throws Exception {
-        if (stringField.equals("ALL")) {
+        if (stringField.equals("ALL") || stringField.equals("all")) {
             searcher.printResults(
                 searcher.allFieldsSearch(stringQuery, 10)
             );
@@ -173,7 +177,7 @@ public class Main {
                     case 4:
                         System.out.println("\n\n=== Leaving the app ===");
                         break;
-                
+
                     default:
                         System.err.println("\nError : Non valuable choice\nWrite one of the proposed number");
                         break;

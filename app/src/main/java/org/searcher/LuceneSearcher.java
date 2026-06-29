@@ -63,7 +63,24 @@ public class LuceneSearcher implements AutoCloseable {
         IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
         this.searcher = new IndexSearcher(reader);
         this.analyzer = new StandardAnalyzer();
-        this.schema = new IndexSchema(indexPath);
+        this.schema = null;
+    }
+
+
+
+    /**
+     * Constructeur de LuceneSearcher, instancie les variables searcher, analyzer et schema.
+     * 
+     * @param indexPath Le chemin vers le fichier contenant l'index Lucene.
+     * @param schema Le schema de l'index.
+     * @throws IOException
+     * @throws Exception
+     */
+    public LuceneSearcher(Path indexPath, IndexSchema schema) throws IOException, Exception {
+        IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
+        this.searcher = new IndexSearcher(reader);
+        this.analyzer = new StandardAnalyzer();
+        this.schema = schema;
     }
 
 
@@ -153,7 +170,7 @@ public class LuceneSearcher implements AutoCloseable {
      * @throws ParseException 
      */
     public TopDocs allFieldsSearch(String text, int nbResults) throws IOException, ParseException {
-        String[] fields = (String[]) this.schema.getFieldsName().toArray();        
+        String[] fields = (String[]) this.schema.getFieldsName().toArray(new String[0]);        
         Query query = new MultiFieldQueryParser(fields, analyzer).parse(text);
         return this.searcher.search(query, nbResults);
     }
@@ -178,18 +195,24 @@ public class LuceneSearcher implements AutoCloseable {
 
 
 
-    /**
-     * Formalise une recherche sur un intervalle de valeurs, l'exécute et renvoie ses résultats.
-     * 
-     * @param field Le champ sur lequel la requête s'effectue.
-     * @param min Le seuil bas de l'intervalle.
-     * @param max Le seuil haut de l'intervalle.
-     * @param nbResults Le nombre maximum de résultats à retourner.
-     * @return
-     */
-    public TopDocs searchRange(String field, long min, long max, int nbResults) {
-        
-        return null;
+    ///**
+    // * Formalise une recherche sur un intervalle de valeurs, l'exécute et renvoie ses résultats.
+    // * 
+    // * @param field Le champ sur lequel la requête s'effectue.
+    // * @param min Le seuil bas de l'intervalle.
+    // * @param max Le seuil haut de l'intervalle.
+    // * @param nbResults Le nombre maximum de résultats à retourner.
+    // * @return
+    // */
+    //public TopDocs searchRange(String field, long min, long max, int nbResults) {
+    //    
+    //    return null;
+    //}
+
+
+
+    public IndexSchema getSchema() {
+        return this.schema;
     }
 
 
