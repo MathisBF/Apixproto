@@ -4,6 +4,7 @@ package org.searcher;
 import org.model.IndexSchema;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -15,9 +16,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.DoubleField;
-import org.apache.lucene.document.LongField;
-
+import org.apache.lucene.document.DoublePoint;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -60,27 +60,13 @@ public class LuceneSearcher implements AutoCloseable {
      * @throws Exception
      */
     public LuceneSearcher(Path indexPath) throws IOException, Exception {
+        
         IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
+        
         this.searcher = new IndexSearcher(reader);
         this.analyzer = new StandardAnalyzer();
-        this.schema = null;
-    }
 
-
-
-    /**
-     * Constructeur de LuceneSearcher, instancie les variables searcher, analyzer et schema.
-     * 
-     * @param indexPath Le chemin vers le fichier contenant l'index Lucene.
-     * @param schema Le schema de l'index.
-     * @throws IOException
-     * @throws Exception
-     */
-    public LuceneSearcher(Path indexPath, IndexSchema schema) throws IOException, Exception {
-        IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
-        this.searcher = new IndexSearcher(reader);
-        this.analyzer = new StandardAnalyzer();
-        this.schema = schema;
+        this.schema = IndexSchema.load(indexPath);
     }
 
 
@@ -93,7 +79,8 @@ public class LuceneSearcher implements AutoCloseable {
      * @throws IOException
      */
     public static boolean indexExists(Path indexPath) throws IOException {
-        return DirectoryReader.indexExists(FSDirectory.open(indexPath));
+        return DirectoryReader.indexExists(FSDirectory.open(indexPath))
+            && Files.exists(indexPath.resolve("schema.json"));
     }
 
 
@@ -170,7 +157,7 @@ public class LuceneSearcher implements AutoCloseable {
      * @throws ParseException 
      */
     public TopDocs allFieldsSearch(String text, int nbResults) throws IOException, ParseException {
-        String[] fields = (String[]) this.schema.getFieldsName().toArray(new String[0]);        
+        String[] fields = this.schema.getFieldsName().toArray(new String[0]);        
         Query query = new MultiFieldQueryParser(fields, analyzer).parse(text);
         return this.searcher.search(query, nbResults);
     }
@@ -211,6 +198,11 @@ public class LuceneSearcher implements AutoCloseable {
 
 
 
+    /**
+     * Retourne le schema de l'index.
+     * 
+     * @return IndexSchema.
+     */
     public IndexSchema getSchema() {
         return this.schema;
     }
@@ -287,7 +279,7 @@ public class LuceneSearcher implements AutoCloseable {
      * @throws IOException
      */
     public void searchLongRange_Old(String field, long min, long max) throws IOException {
-        Query query = LongField.newRangeQuery(field, min, max);
+        Query query = LongPoint.newRangeQuery(field, min, max);
         runQuery(query, field + " entre " + min + " et " + max);
     }
 
@@ -302,7 +294,7 @@ public class LuceneSearcher implements AutoCloseable {
      * @throws Exception
      */
     public void searchDoubleRange_Old(String field, double min, double max) throws Exception {
-        Query query = DoubleField.newRangeQuery(field, min, max);
+        Query query = DoublePoint.newRangeQuery(field, min, max);
         runQuery(query, field + " entre " + min + " et " + max);
     }
 

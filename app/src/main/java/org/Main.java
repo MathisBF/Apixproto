@@ -39,10 +39,8 @@ public class Main {
             buildIndex(parquetPath, indexPath);
         }
 
-        IndexSchema schema = new IndexSchema(parquetPath);
-        System.out.println("\n" + schema.toString() + "\n"); // Debug
-        try (LuceneSearcher searcher = new LuceneSearcher(indexPath, schema)) {
-            System.out.println("\n" + searcher.getSchema().toString() + "\n"); // Debug
+        try (LuceneSearcher searcher = new LuceneSearcher(indexPath)) {
+            System.out.println(searcher.getSchema().toString()); // DEBUG
             runConsole(parquetPath, indexPath, searcher);
         }
     }

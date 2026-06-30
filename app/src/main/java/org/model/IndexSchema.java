@@ -3,14 +3,22 @@ package org.model;
 
 import org.parquet.ParquetReader;
 
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DatabindException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
 import java.util.List;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.arrow.vector.types.pojo.ArrowType.Int;
+import org.apache.arrow.vector.types.pojo.ArrowType.ArrowTypeID;
 import org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint;
 
 import org.apache.lucene.document.Document;
@@ -176,7 +184,25 @@ public class IndexSchema {
 
 
 
-    public static boolean isFullTextField(org.apache.arrow.vector.types.pojo.Field arrowField) {
+    /**
+     * Determine si un champ Arrow de type chaîne de caractère doit être interprété
+     * comme un champ Lucene TextField ou StringField.
+     * 
+     * @param arrowField Le champ Arrow.
+     * @return true pour TextField ou false pour StringField.
+     * @throws IllegalArgumentException 
+     */
+    public static boolean isFullTextField(org.apache.arrow.vector.types.pojo.Field arrowField) throws IllegalArgumentException {
+        
+        switch (arrowField.getType().getTypeID()) {
+            case Utf8, LargeUtf8:
+                break;
+            default:
+                throw new IllegalArgumentException(
+                    "arrowField TypeID should be Utf8 or LargeUtf8."
+                );
+        }
+
         return switch (arrowField.getName()) {
             case "description", "titre", "contenue", "texte" -> true;
             default -> false;
@@ -185,6 +211,13 @@ public class IndexSchema {
 
 
 
+    /**
+     * Ajoute un champ à un document Lucene.
+     * 
+     * @param doc Le document.
+     * @param fieldName Le nom du champ.
+     * @param value La valeur du champ.
+     */
     public void addField(Document doc, String fieldName, Object value) {
 
         LuceneFieldType type = getFieldType(fieldName);
@@ -221,6 +254,47 @@ public class IndexSchema {
             default:
                 break;
         }
+    }
+
+
+
+    /**
+     * Sauvegarde le schema dans un fichier json.
+     * 
+     * @param indexPath Le chemin vers le répertoire contenant l'index.
+     * @throws IOException
+     */
+    public void save(Path indexPath) throws IOException {
+
+        Files.createDirectories(indexPath);
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        mapper.writerWithDefaultPrettyPrinter()
+        .writeValue(indexPath.resolve("schema.json").toFile(), fields);
+    }
+
+
+
+    /**
+     * Charge le schema de l'index depuis ce dernier.
+     * 
+     * @param indexPath Le chemin vers l'index.
+     * @return Un nouvel objet IndexSchema.
+     * @throws StreamReadException
+     * @throws DatabindException
+     * @throws IOException
+     */
+    public static IndexSchema load(Path indexPath) throws StreamReadException, DatabindException, IOException {
+        
+        ObjectMapper mapper = new ObjectMapper();
+
+        Map<String, LuceneFieldType> map = mapper.readValue(
+            indexPath.resolve("schema.json").toFile(),
+            new TypeReference<Map<String, LuceneFieldType>>() {}
+        );
+
+        return new IndexSchema(map);
     }
 
 

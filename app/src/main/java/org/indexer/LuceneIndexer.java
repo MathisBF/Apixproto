@@ -28,7 +28,14 @@ public class LuceneIndexer implements AutoCloseable {
      * Le writer, écrit l'index.
      */
     private final IndexWriter writer;
+    /**
+     * Le schéma de l'index.
+     */
     private final IndexSchema schema;
+    /**
+     * Le chemin vers l'index.
+     */
+    private final Path indexPath;
 
 
 
@@ -39,11 +46,14 @@ public class LuceneIndexer implements AutoCloseable {
      * @throws IOException
      */
     public LuceneIndexer(Path indexPath, IndexSchema schema) throws IOException {
+        
+        this.indexPath = indexPath;
+        this.schema = schema;
+
         Directory directory = FSDirectory.open(indexPath);
         IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE); // CREATE_OR_APPEND pour ajouter si l'index existe déjà
         this.writer = new IndexWriter(directory, config);
-        this.schema = schema;
     }
 
 
@@ -65,45 +75,10 @@ public class LuceneIndexer implements AutoCloseable {
             if (value == null) continue;
 
             this.schema.addField(doc, fieldName, value);
-
-            //if (value instanceof Long l) {
-            //    doc.add(new LongField(fieldName, l, Field.Store.YES));
-            //} else if (value instanceof Integer i) {
-            //    doc.add(new DoubleField(fieldName, i, Field.Store.YES));
-            //} else if (value instanceof Float f) {
-            //    doc.add(new DoubleField(fieldName, f, Field.Store.YES));
-            //} else if (value instanceof Double d) {
-            //     doc.add(new DoubleField(fieldName, d, Field.Store.YES));
-            //} else if (value instanceof Boolean b) {
-            //    // Lucene n'a pas de Field de bouléen
-            //    doc.add(new StringField(fieldName, b.toString(), Field.Store.YES));
-            //} else {
-            //    String text = value.toString();
-            //    if (isFullTextField(fieldName)) {
-            //        doc.add(new TextField(fieldName, text, Field.Store.YES));
-            //    } else {
-            //        doc.add(new StringField(fieldName, text, Field.Store.YES));
-            //    }
-            //}
         }
 
         this.writer.addDocument(doc);
     }
-
-
-
-    ///**
-    // * Détermine si un champ doit être indexé en full-text (TextField)
-    // * ou en valeur exacte (StringField).
-    // * 
-    // * @param fieldName Le nom du champ.
-    // */
-    //private boolean isFullTextField(String fieldName) {
-    //    return switch (fieldName) {
-    //        case "description", "titre", "contenue", "texte" -> true;
-    //        default -> false;
-    //    };
-    //}
 
 
 
@@ -113,8 +88,19 @@ public class LuceneIndexer implements AutoCloseable {
      * @throws IOException
      */
     public void commit() throws IOException {
+        
+        this.schema.save(this.indexPath);
         this.writer.commit();
         System.out.println("Index créé : " + writer.getDocStats().numDocs + " documents indexés.");
+    }
+
+
+
+    /**
+     * @return Le chemin vers l'index.
+     */
+    public Path getPath() {
+        return this.indexPath;
     }
 
 
