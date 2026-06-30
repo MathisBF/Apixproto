@@ -1,6 +1,7 @@
 # ApixProto
 
 ApixProto est un prototype d'Apix, un module d'indexation et de recherche via Lucene avec en entrée un fichier Parquet.
+Il doit pouvoir, lire un fichier au format Parquet, stocker ses données sous forme d'un index Lucene, et effectuer des requêtes sur l'index ainsi obtenu.
 
 ---
 
@@ -10,19 +11,6 @@ ApixProto est un prototype d'Apix, un module d'indexation et de recherche via Lu
 ### Lucene 10.4.0
 ### Arrow 15.0.2
 La version 17.0.0 existe.
-
----
-
-## Fonctionnalités présentes
-- Lecture d'un fichier au format Parquet et création d'un index Lucene à partir du fichier source.
-- Exécution de requête sur l'index via Lucene.
-
----
-
-## Points à développer
-- Conversion des types de Arrow à Lucenne à traves la classe IndexSchema, nottament choix entre StringField et TextField.
-- Système de requête, trop pauvre et ne correspondant pas aux besoins.
-- Mettre à jour Arrow.
 
 ---
 
@@ -49,26 +37,51 @@ Contient `ParquetReader.java`, la classe permettant de lire le fichier Parquet (
 - `readSchema(Path parquetPath)` retournant le schema Arrow des données du fichier.
 - `readParquet(Path parquetPath,  Consumer<ParquetRow> onRow)` lisant le fichier batch par batch, pour chaque ligne, construis un objet `ParquetRow` contenant les données de la ligne Parquet, et appelle la méthode onRow sur cet objet.
 
-### indexer
-
 ### model
 
+Structure les données via deux classes:
+- `ParquetRow` représente une ligne d'un fichier Parquet sous la forme d'un dictionnaire, chaque paire clé / valeur est associée à un field Arrow contenant une seule valeur (celle de la ligne du fichier correspondante). La clé du dictionnaire est le nom du field, et sa valeur est la valeur du field de cette ligne, créer comme instance d'Object java.
+- `IndexSchema` contient les métatdonnées de l'index, et fait le lien entre les données Arrow et Lucene. Permet nottament de déterminer comment convertir les données Arrow en fields Lucene afin des les stocker dans l'index. Les métadonnées sont stockées dans l'index avec l'indexer afin d'être accessibles depuis le searcher et facilter ainsi la formulation des requêtes.
+
+### indexer
+
+Contient la classe `LuceneIndexer`, qui permet l'écriture de l'index. L'écriture se fait à partir d'un ParquetRow qui est convertit en un Document Lucene via IndexSchema.
+
 ### searcher
+
+Contient la classe `LuceneSearcher` qui permet la formulation et l'exécution des requêtes / recherches sur l'index.
 
 ---
 
 ## Suivi du projet
 
-### 15/06 -> 30/06
+### CheckPoint - 30/06
 
-### 30/06
+#### Lancement du projet
 
-L'application permet de
+Prise en main de Lucene et Arrow.
+
+Début du développement à partir du fichier `ParquetReader.java` qui était préexistant, création de `LuceneIndexer` et de `ParquetRow` pour écrire les données du fichier source Parquet (utilisation alors d'un fichier de test de 10 lignes) dans un index Lucene. Puis création de `LuceneSearcher` pour lire l'index et faire des requêtes dessus.
+
+L'application permet alors de
 - lire un fichier Parquet
 - créer un index Lucene à partir de ce fichier source et stocke l'index dans des fichiers
 - effectuer des recherches / requêtes sur cet index
 
-## Structure du projet
+Améliioration des différentes classes, méthodes `toString()` et `equals()` avec `@override`, faire en sorte que `LuceneIndexer` et `LuceneSearcher` implémentent `AutoCloseable` ...
+
+Création de `IndexSchema` afin de stocker les métadonnées de l'index.
+
+Ajout d'une couche de conversion entre `ParquetReader` et `LuceneIndexer` via `IndexSchema` afin de mieux séparer les rôles de chaque classe.
+
+Stockage de `IndexSchema` dans l'index, et non plus via un objet java. Permet l'autonomie de `LuceneSearcher`.
+
+Mise à jour des types de fields numériques Lucene, exemple :
+    LongField -> LongPoint + StoredField (disponibles depuis Lucene 8/9)
+
+Finalisation des classes socles (`ParquetReader` et `LuceneIndexer`, qui ne dépendent pas de la façon précise de convertir les données car je n'ai pas encore accès au bon fichier source), sauf problème survenant ultérieurement.
+
+#### Architecture du projet à cette étape :
 
 ```text
 app
@@ -84,3 +97,9 @@ app
         │       └── searcher
         └── resources
 ```
+
+#### To do
+
+- Revoir la conversion des types de Arrow à Lucenne pour quelle soit adapté au projet, nottament choix entre StringField et TextField.
+- Mettre au propre le système de requête et l'enrichir.
+- Mettre à jour Arrow.
