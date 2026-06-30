@@ -18,7 +18,6 @@ import java.nio.file.Path;
 
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.arrow.vector.types.pojo.ArrowType.Int;
-import org.apache.arrow.vector.types.pojo.ArrowType.ArrowTypeID;
 import org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint;
 
 import org.apache.lucene.document.Document;

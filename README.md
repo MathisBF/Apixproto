@@ -20,7 +20,67 @@ La version 17.0.0 existe.
 ---
 
 ## Points à développer
-- Lecture du fichier Parquet, la conversion des types de Arrow à Lucenne à traves la classe ParquetSchema, nottament choix entre StringField et TextField.
-- Relier ParquetSchema à LuceneIndexer.
-- Système de requête, trop pauvre et ne correspondant pas encore à tous les besoins.
+- Conversion des types de Arrow à Lucenne à traves la classe IndexSchema, nottament choix entre StringField et TextField.
+- Système de requête, trop pauvre et ne correspondant pas aux besoins.
 - Mettre à jour Arrow.
+
+---
+
+## Architecture du projet
+
+```text
+app
+├── data
+│   └── index
+└── src
+    └── main
+        ├── java
+        │   └── org
+        │       ├── indexer
+        │       ├── model
+        │       ├── parquet
+        │       └── searcher
+        └── resources
+```
+
+### parquet
+
+Contient `ParquetReader.java`, la classe permettant de lire le fichier Parquet (fichier se trouvant dans `resources`), composée de deux méthodes:
+- `readSchema(Path parquetPath)` retournant le schema Arrow des données du fichier.
+- `readParquet(Path parquetPath,  Consumer<ParquetRow> onRow)` lisant le fichier batch par batch, pour chaque ligne, construis un objet `ParquetRow` contenant les données de la ligne Parquet, et appelle la méthode onRow sur cet objet.
+
+### indexer
+
+### model
+
+### searcher
+
+---
+
+## Suivi du projet
+
+### 15/06 -> 30/06
+
+### 30/06
+
+L'application permet de
+- lire un fichier Parquet
+- créer un index Lucene à partir de ce fichier source et stocke l'index dans des fichiers
+- effectuer des recherches / requêtes sur cet index
+
+## Structure du projet
+
+```text
+app
+├── data
+│   └── index
+└── src
+    └── main
+        ├── java
+        │   └── org
+        │       ├── indexer
+        │       ├── model
+        │       ├── parquet
+        │       └── searcher
+        └── resources
+```
