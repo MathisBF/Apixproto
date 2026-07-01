@@ -1,7 +1,8 @@
 # ApixProto
 
 ApixProto est un prototype d'Apix, un module d'indexation et de recherche via Lucene avec en entrée un fichier Parquet.
-Il doit pouvoir, lire un fichier au format Parquet, stocker ses données sous forme d'un index Lucene, et effectuer des requêtes sur l'index ainsi obtenu.
+
+Le module doit pouvoir, lire un fichier au format Parquet, stocker ses données sous forme d'un index Lucene, et effectuer des requêtes sur l'index ainsi obtenu.
 
 ---
 
@@ -35,7 +36,7 @@ app
 
 Contient `ParquetReader.java`, la classe permettant de lire le fichier Parquet (fichier se trouvant dans `resources`), composée de deux méthodes:
 - `readSchema(Path parquetPath)` retournant le schema Arrow des données du fichier.
-- `readParquet(Path parquetPath,  Consumer<ParquetRow> onRow)` lisant le fichier batch par batch, pour chaque ligne, construis un objet `ParquetRow` contenant les données de la ligne Parquet, et appelle la méthode onRow sur cet objet.
+- `readParquet(Path parquetPath,  Consumer<ParquetRow> onRow)` lisant le fichier batch par batch, pour chaque ligne du fichier Parquet, construis un objet `ParquetRow` contenant les données de la ligne Parquet, et appelle la méthode onRow sur cet objet.
 
 ### model
 
@@ -45,7 +46,7 @@ Structure les données via deux classes:
 
 ### indexer
 
-Contient la classe `LuceneIndexer`, qui permet l'écriture de l'index. L'écriture se fait à partir d'un ParquetRow qui est convertit en un Document Lucene via IndexSchema.
+Contient la classe `LuceneIndexer`, qui permet l'écriture de l'index. L'écriture se fait à partir d'un ParquetRow qui est convertit en un Document Lucene via IndexSchema, pour se faire sa méthode `writeIndex(ParquetRow row)` est appelée en entrée de `readParquet(Path parquetPath,  Consumer<ParquetRow> onRow)` à la place de `onRow`.
 
 ### searcher
 
@@ -68,7 +69,7 @@ L'application permet alors de
 - créer un index Lucene à partir de ce fichier source et stocke l'index dans des fichiers
 - effectuer des recherches / requêtes sur cet index
 
-Améliioration des différentes classes, méthodes `toString()` et `equals()` avec `@override`, faire en sorte que `LuceneIndexer` et `LuceneSearcher` implémentent `AutoCloseable` ...
+Amélioration des différentes classes, méthodes `toString()` et `equals()` avec `@override`, faire en sorte que `LuceneIndexer` et `LuceneSearcher` implémentent `AutoCloseable` ...
 
 Création de `IndexSchema` afin de stocker les métadonnées de l'index.
 
@@ -103,3 +104,4 @@ app
 - Revoir la conversion des types de Arrow à Lucenne pour quelle soit adapté au projet, nottament choix entre StringField et TextField.
 - Mettre au propre le système de requête et l'enrichir.
 - Mettre à jour Arrow.
+- Création de tests avec JUnit.
