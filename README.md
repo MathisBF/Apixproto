@@ -54,6 +54,20 @@ Contient la classe `LuceneSearcher` qui permet la formulation et l'exécution de
 
 ---
 
+## Correspondances Arrow Lucene
+
+| Type Arrow | Type Lucene | Recherches possibles |
+|------------|-------------|----------------------|
+| `Utf8`, `LargeUtf8` | `StringField` / `TextField` | valeur exacte / texte libre |
+| Bool | `StringField` ("true" / "false") | valeur exacte |
+| `Int(8)`, `Int(16)`, `Int(32)` | `IntPoint` + `StoredField` | valeur exacte / intervalle |
+| `Int(64)` | `LongPoint` + `StoredField` | valeur exacte / intervalle |
+| `FloatingPoint(HALF)`, `FloatingPoint(SINGLE)` | `FloatPoint` + `StoredField` | valeur exacte / intervalle |
+| `FloatingPoint(DOUBLE)` | `DoublePoint` + `StoredField` | valeur exacte / intervalle |
+| `TimeStamp`, `Date` | `LongPoint` + `StoredField` | intervalle |
+
+---
+
 ## Suivi du projet
 
 ### CheckPoint - 30/06
@@ -101,7 +115,7 @@ app
 
 #### To do
 
-- Revoir la conversion des types de Arrow à Lucenne pour quelle soit adapté au projet, nottament choix entre StringField et TextField.
+- Revoir la conversion des types de Arrow à Lucenne pour quelle soit adapté au projet, nottament choix entre StringField et TextField. Ajouter NumericDocValues (permet tri par exemple) ?
 - Mettre au propre le système de requête et l'enrichir.
 - Mettre à jour Arrow.
 - Création de tests avec JUnit.
