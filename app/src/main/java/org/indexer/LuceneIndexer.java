@@ -19,6 +19,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.Directory;
 
 
+
 /**
  * La classe LuceneIndexer permet de créer un index Lucene à partir de données Parquet via ParquetRow.
  */
@@ -74,7 +75,7 @@ public class LuceneIndexer implements AutoCloseable {
 
             if (value == null) continue;
 
-            this.schema.addField(doc, fieldName, value);
+            this.schema.getField(fieldName).addToDocument(doc, value);
         }
 
         this.writer.addDocument(doc);

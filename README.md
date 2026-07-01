@@ -15,6 +15,12 @@ La version 17.0.0 existe.
 
 ---
 
+## Utilisation
+
+./gradlew run --console=plain --args="src/main/resources/test.parquet data/index" --no-configuration-cache
+
+---
+
 ## Architecture du projet
 
 ```text
@@ -31,6 +37,8 @@ app
         │       └── searcher
         └── resources
 ```
+
+Le répertoire `index` sert comme son nom l'indique à stocker l'index généré par l'application, et `resources` a pour but de contenir le fichier source.
 
 ### parquet
 

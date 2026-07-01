@@ -17,18 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.apache.arrow.vector.types.pojo.Schema;
-import org.apache.arrow.vector.types.pojo.ArrowType.Int;
-import org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.DoublePoint;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FloatPoint;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.LongPoint;
-import org.apache.lucene.document.StoredField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
 
 
 
@@ -46,7 +34,7 @@ public class IndexSchema {
     /**
      * Les noms des champs et leur type Lucene.
      */
-    private final Map<String, LuceneFieldType> fields;
+    private final Map<String, FieldDescriptor> fields;
 
 
 
@@ -61,7 +49,9 @@ public class IndexSchema {
         this.fields = new HashMap<>();
 
         for (org.apache.arrow.vector.types.pojo.Field f : arrowFields) {
-            this.fields.put(f.getName(), arrowToLuceneField(f));
+            this.fields.put(
+                f.getName(), new FieldDescriptor(f)
+            );
         }
     }
 
@@ -79,7 +69,9 @@ public class IndexSchema {
         this.fields = new HashMap<>();
 
         for (org.apache.arrow.vector.types.pojo.Field f : arrowFields) {
-            this.fields.put(f.getName(), arrowToLuceneField(f));
+            this.fields.put(
+                f.getName(), new FieldDescriptor(f)
+            );
         }
     }
 
@@ -90,30 +82,30 @@ public class IndexSchema {
      * 
      * @param fields Dictionnaire entre les noms et les types des champs.
      */
-    public IndexSchema(Map<String, LuceneFieldType> fields) {
+    public IndexSchema(Map<String, FieldDescriptor> fields) {
         this.fields = new HashMap<>(fields);
     }
 
 
 
     /**
-     * Retourne le nom des champs et leurs types Lucene.
+     * Retourne le nom des champs et leurs descripteurs.
      * 
      * @return Un dictionnaire contenant le nom des champs en clé et leurs types Lucene en valeur.
      */
-    public Map<String, LuceneFieldType> getFields() {
+    public Map<String, FieldDescriptor> getFields() {
         return this.fields;
     }
 
 
 
     /**
-     * Retourne le type Lucene d'un champ.
+     * Retourne le descripteur d'un champ à partir de son nom.
      * 
      * @param fieldName Le nom du champ.
-     * @return Le type Lucene du champ.
+     * @return Le descripteur.
      */
-    public LuceneFieldType getFieldType(String fieldName) {
+    public FieldDescriptor getField(String fieldName) {
         return this.fields.get(fieldName);
     }
 
@@ -126,133 +118,6 @@ public class IndexSchema {
      */
     public Set<String> getFieldsName() {
         return this.fields.keySet();
-    }
-
-
-
-    /**
-     * Determine le type de champ Lucene vers lequel convertir un champ Arrow.
-     * 
-     * @param arrowField Le champ Arrow.
-     * @throws IllegalArgumentException
-     * @return Le type de champ Lucene.
-     */
-    public static LuceneFieldType arrowToLuceneField(org.apache.arrow.vector.types.pojo.Field arrowField) throws IllegalArgumentException {
-
-        switch (arrowField.getType().getTypeID()) {
-
-            case Int:
-                Int intType = (Int) arrowField.getType();
-                switch (intType.getBitWidth()) {
-                    case 8, 16, 32:
-                        return LuceneFieldType.IntPoint;
-                    case 64:
-                        return LuceneFieldType.LongPoint;
-                    default:
-                        throw new IllegalArgumentException("Unsupported integer width");
-                }
-
-            case FloatingPoint:
-                FloatingPoint floatType = (FloatingPoint) arrowField.getType();
-                switch (floatType.getPrecision()) {
-                    case SINGLE, HALF:
-                        return LuceneFieldType.FloatPoint;
-                    case DOUBLE:
-                        return LuceneFieldType.DoublePoint;
-                    default:
-                        throw new IllegalArgumentException("Unsupported float precision");
-                }
-
-            case Bool:
-                return LuceneFieldType.StringField;
-
-            case Date:
-                return LuceneFieldType.LongPoint;
-
-            case Utf8, LargeUtf8:
-                if (isFullTextField(arrowField)) {
-                    return LuceneFieldType.TextField;
-                } else {
-                    return LuceneFieldType.StringField;
-                }
-
-            default:
-                return LuceneFieldType.StringField;
-        }
-    }
-
-
-
-    /**
-     * Determine si un champ Arrow de type chaîne de caractère doit être interprété
-     * comme un champ Lucene TextField ou StringField.
-     * 
-     * @param arrowField Le champ Arrow.
-     * @return true pour TextField ou false pour StringField.
-     * @throws IllegalArgumentException 
-     */
-    public static boolean isFullTextField(org.apache.arrow.vector.types.pojo.Field arrowField) throws IllegalArgumentException {
-        
-        switch (arrowField.getType().getTypeID()) {
-            case Utf8, LargeUtf8:
-                break;
-            default:
-                throw new IllegalArgumentException(
-                    "arrowField TypeID should be Utf8 or LargeUtf8."
-                );
-        }
-
-        return switch (arrowField.getName()) {
-            case "description", "titre", "contenue", "texte" -> true;
-            default -> false;
-        };
-    }
-
-
-
-    /**
-     * Ajoute un champ à un document Lucene.
-     * 
-     * @param doc Le document.
-     * @param fieldName Le nom du champ.
-     * @param value La valeur du champ.
-     */
-    public void addField(Document doc, String fieldName, Object value) {
-
-        LuceneFieldType type = getFieldType(fieldName);
-
-        switch (type) {
-            case TextField:
-                doc.add(new TextField(fieldName, value.toString(), Field.Store.YES));
-                break;
-
-            case StringField:
-                doc.add(new StringField(fieldName, value.toString(), Field.Store.YES));
-                break;
-
-            case IntPoint:
-                doc.add(new IntPoint(fieldName, ((Number) value).intValue()));
-                doc.add(new StoredField(fieldName, ((Number) value).intValue()));
-                break;
-
-            case LongPoint:
-                doc.add(new LongPoint(fieldName, ((Number) value).longValue()));
-                doc.add(new StoredField(fieldName, ((Number) value).longValue()));
-                break;
-
-            case FloatPoint:
-                doc.add(new FloatPoint(fieldName, ((Number) value).floatValue()));
-                doc.add(new StoredField(fieldName, ((Number) value).floatValue()));
-                break;
-
-            case DoublePoint:
-                doc.add(new DoublePoint(fieldName, ((Number) value).doubleValue()));
-                doc.add(new StoredField(fieldName, ((Number) value).doubleValue()));
-                break;
-
-            default:
-                break;
-        }
     }
 
 
@@ -288,9 +153,9 @@ public class IndexSchema {
         
         ObjectMapper mapper = new ObjectMapper();
 
-        Map<String, LuceneFieldType> map = mapper.readValue(
+        Map<String, FieldDescriptor> map = mapper.readValue(
             indexPath.resolve("schema.json").toFile(),
-            new TypeReference<Map<String, LuceneFieldType>>() {}
+            new TypeReference<Map<String, FieldDescriptor>>() {}
         );
 
         return new IndexSchema(map);
