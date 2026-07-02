@@ -3,7 +3,10 @@ package org.model;
 
 import org.model.IndexSchema.LuceneFieldType;
 
-import org.apache.arrow.vector.types.pojo.ArrowType.ArrowTypeID;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.ArrowType.Int;
 import org.apache.arrow.vector.types.pojo.ArrowType.FloatingPoint;
 
@@ -23,7 +26,7 @@ public class FieldDescriptor {
 
     private final String fieldName;
     private final LuceneFieldType luceneType;
-    private final ArrowTypeID arrowType;
+    private final ArrowType arrowType;
     private final boolean indexed;
     private final boolean stored;
     private final boolean analyzed;
@@ -42,7 +45,7 @@ public class FieldDescriptor {
 
         this.fieldName = arrowField.getName();
         this.luceneType = FieldDescriptor.arrowToLuceneField(arrowField);
-        this.arrowType = arrowField.getType().getTypeID();
+        this.arrowType = arrowField.getType();
         this.indexed = true;
         this.stored = true;
         this.analyzed = (luceneType == LuceneFieldType.TextField);
@@ -51,9 +54,39 @@ public class FieldDescriptor {
 
 
     /**
+     * Le constructeur de FieldDescriptor via Json.
+     * 
+     * @param fieldName Le nom du champ.
+     * @param luceneType Le type arrow à l'origine du champ.
+     * @param arrowType Le type Lucene du champ.
+     * @param indexed Est-ce que le champ est indexé ou non.
+     * @param stored Est-ce que le champ est stocké ou non.
+     * @param analyzed Est-ce que le champ nécessite un Analyzer ou non.
+     */
+    @JsonCreator
+    public FieldDescriptor(
+        @JsonProperty("fieldName") String fieldName,
+        @JsonProperty("luceneType") LuceneFieldType luceneType,
+        @JsonProperty("arrowType") ArrowType arrowType,
+        @JsonProperty("indexed") boolean indexed,
+        @JsonProperty("stored") boolean stored,
+        @JsonProperty("analyzed") boolean analyzed
+    ) {
+        this.fieldName = fieldName;
+        this.luceneType = luceneType;
+        this.arrowType = arrowType;
+        this.indexed = indexed;
+        this.stored = stored;
+        this.analyzed = analyzed;
+    }
+
+
+
+    /**
      * 
      * @return
      */
+    @JsonProperty("fieldName")
     public String getFieldName() {
         return this.fieldName;
     }
@@ -64,6 +97,7 @@ public class FieldDescriptor {
      * 
      * @return
      */
+    @JsonProperty("luceneType")
     public LuceneFieldType getLuceneFieldType() {
         return this.luceneType;
     }
@@ -74,7 +108,8 @@ public class FieldDescriptor {
      * 
      * @return
      */
-    public ArrowTypeID getArrowTypeID() {
+    @JsonProperty("arrowType")
+    public ArrowType getArrowType() {
         return this.arrowType;
     }
 
@@ -84,6 +119,7 @@ public class FieldDescriptor {
      * 
      * @return
      */
+    @JsonProperty("indexed")
     public boolean isIndexed() {
         return this.indexed;
     }
@@ -94,6 +130,7 @@ public class FieldDescriptor {
      * 
      * @return
      */
+    @JsonProperty("stored")
     public boolean isStored() {
         return this.stored;
     }
@@ -104,6 +141,7 @@ public class FieldDescriptor {
      * 
      * @return
      */
+    @JsonProperty("analyzed")
     public boolean isAnalyzed() {
         return this.analyzed;
     }
@@ -248,7 +286,7 @@ public class FieldDescriptor {
         FieldDescriptor other = (FieldDescriptor) o;
         boolean testName = this.fieldName.equals(other.getFieldName());
         boolean testLuceneType = this.luceneType.equals(other.getLuceneFieldType());
-        boolean testArrowType = this.arrowType.equals(other.getArrowTypeID());
+        boolean testArrowType = this.arrowType.equals(other.getArrowType());
         boolean testIndexed = this.indexed == other.isIndexed();
         boolean testStored = this.stored == other.isStored();
         boolean testAnalyzed = this.analyzed == other.isAnalyzed();
